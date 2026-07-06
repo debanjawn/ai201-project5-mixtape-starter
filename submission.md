@@ -455,15 +455,15 @@ I reproduced this by running `python -m pytest tests/test_streaks.py -v` before 
 
 ### How I found the root cause
 
-TODO: Describe which files/functions I traced and what led me to the specific root cause.
+I traced the failing test to `update_listening_streak()` in `services/streak_service.py`. The function calculates `days_since_last` by comparing today’s date to `user.last_listened_at`. The main consecutive-day condition was on line 73: `days_since_last == 1 and today.weekday() != 6`. Since the failing test specifically involved Sunday, I checked Python’s `weekday()` behavior and saw that Sunday is `6`.
 
 ### The root cause
 
-TODO: Explain the precise bug in plain English.
+The streak logic correctly checked whether the user listened yesterday with `days_since_last == 1`, but it also excluded Sundays with `today.weekday() != 6`. On Sunday, `today.weekday()` returns `6`, so the consecutive-day condition became false even when the user had listened on Saturday. The code then fell into the reset branch and set the streak back to 1 instead of incrementing it.
 
 ### My fix and side-effect check
 
-TODO: Explain what I changed, why it fixed the issue, and what related behavior I checked afterward.
+I removed the unnecessary Sunday exclusion so the streak increments whenever `days_since_last == 1`, including Saturday-to-Sunday. I verified the fix by running `python -m pytest tests/test_streaks.py -v`. All five streak tests passed, including starting a streak, incrementing on consecutive days, avoiding double-counting on the same day, resetting after a skipped day, and incrementing on Sunday.
 
 ## Issue 3: The same song keeps showing up twice in search
 
