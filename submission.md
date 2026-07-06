@@ -451,7 +451,7 @@ Playlist retrieval has a clear route → service → association table flow. The
 
 ### How I reproduced it
 
-TODO: Describe the exact test, request, or manual steps used to reproduce the bug.
+I reproduced this by running `python -m pytest tests/test_streaks.py -v` before changing any code. The Sunday-specific test failed. The test listened on Saturday and then Sunday. After Saturday, the streak was 1. After Sunday, the expected streak was 2, but the actual streak stayed at 1. This confirmed that the streak failed to increment across the Saturday-to-Sunday boundary.
 
 ### How I found the root cause
 
@@ -469,7 +469,7 @@ TODO: Explain what I changed, why it fixed the issue, and what related behavior 
 
 ### How I reproduced it
 
-TODO: Describe the exact test, request, or manual steps used to reproduce the bug.
+I investigated this by running manual search requests against seeded multi-tag songs, including `Crown Heights`, `Harlem`, `After Hours`, `Lagos`, and `Frequencies`. These each returned `count: 1`, so they did not reproduce the duplicate-result bug yet. I also tried tag-only searches like `rap` and `hip-hop`, which returned empty results. Next I need to inspect `services/search_service.py` and `tests/test_search.py` to find the exact input or data condition that triggers duplicates.
 
 ### How I found the root cause
 
@@ -487,7 +487,7 @@ TODO: Explain what I changed, why it fixed the issue, and what related behavior 
 
 ### How I reproduced it
 
-TODO: Describe the exact test, request, or manual steps used to reproduce the bug.
+I reproduced this by running `python -m pytest tests/test_playlists.py -v` before changing any code. Two playlist tests failed. `test_playlist_returns_all_songs` expected `get_playlist_songs()` to return 5 songs, but it returned 4. `test_playlist_returns_songs_in_order` expected Track 1 through Track 5, but the actual result only included Track 1 through Track 4. This confirmed that the final playlist song was missing.
 
 ### How I found the root cause
 
