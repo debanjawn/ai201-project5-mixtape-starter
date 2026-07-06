@@ -2,9 +2,11 @@
 
 ## AI Usage
 
-I used Codex as an in-editor AI helper during codebase orientation and debugging. During Milestone 1, I used it to summarize the project structure, explain the association tables in `models.py`, and trace feature flows from route files into service files and models. I also used ChatGPT to help me understand what the project brief meant by a “codebase map” and to turn my notes into a clearer outline.
+I used Codex as an in-editor AI helper and ChatGPT as a debugging coach during this project. During codebase orientation, I used AI to summarize the app structure, explain the association tables in `models.py`, and trace route → service → model flows for features like playlist song retrieval, search, and listening streaks.
 
-I did not use AI as a replacement for reading the code. I verified the structure by opening the files myself, checking the route/service/model connections, running the test suite, and comparing AI explanations against the actual code. As I work through the bug fixes, I will use AI mainly to explain suspicious functions or compare similar code paths, but I will reproduce each bug locally and verify the fix myself before committing.
+During debugging, I used AI to help inspect suspicious functions and explain Python/SQLAlchemy behavior. For the playlist bug, AI helped me confirm that `songs[:-1]` drops the final item in a list. For the streak bug, AI helped me verify that Python’s `weekday()` returns `6` for Sunday, which explained why the Sunday case failed. For the search bug, I used AI to form a hypothesis about the `song_tags` join, but I verified it myself by running a raw joined query that returned three rows for the same song ID.
+
+I did not rely on AI output without checking it. In one case, AI suggested that a normal curl request for a multi-tag song might show duplicate results, but my manual request returned `count: 1`. I then verified the issue more carefully by comparing raw joined rows against the service output. I reproduced the bugs locally, made targeted fixes, ran the relevant tests, and then ran the full test suite before committing.
 
 ## Codebase Map
 
