@@ -491,12 +491,12 @@ I reproduced this by running `python -m pytest tests/test_playlists.py -v` befor
 
 ### How I found the root cause
 
-TODO: Describe which files/functions I traced and what led me to the specific root cause.
+I traced the failing tests to `get_playlist_songs()` in `services/playlist_service.py`. The query loaded songs through `playlist_entries`, filtered by playlist ID, and ordered by `playlist_entries.position`, which matched the expected data flow. The bug was not in the query. The suspicious line was the final return statement, which converted `songs[:-1]` into dictionaries. That slice removes the last item from the list.
 
 ### The root cause
 
-TODO: Explain the precise bug in plain English.
+The service correctly queried all songs in the playlist, but the return statement used `songs[:-1]`. In Python, `[:-1]` returns the list without its final element. As a result, every playlist response intentionally dropped the last song, even though the database query had loaded it correctly.
 
 ### My fix and side-effect check
 
-TODO: Explain what I changed, why it fixed the issue, and what related behavior I checked afterward.
+I changed the return statement to iterate over `songs` instead of `songs[:-1]`, so every queried song is serialized and returned. I verified the fix by running `python -m pytest tests/test_playlists.py -v`. All playlist tests passed, including the test for returning all 5 songs, the test for preserving song order, and the empty playlist test.
