@@ -469,19 +469,19 @@ I removed the unnecessary Sunday exclusion so the streak increments whenever `da
 
 ### How I reproduced it
 
-I investigated this by running manual search requests against seeded multi-tag songs, including `Crown Heights`, `Harlem`, `After Hours`, `Lagos`, and `Frequencies`. These each returned `count: 1`, so they did not reproduce the duplicate-result bug yet. I also tried tag-only searches like `rap` and `hip-hop`, which returned empty results. Next I need to inspect `services/search_service.py` and `tests/test_search.py` to find the exact input or data condition that triggers duplicates.
+I reproduced the underlying duplicate condition by querying the joined search path directly. Searching for `Crown Heights` through the joined `Song` + `song_tags` query returned 3 raw rows with the same song ID because `Crown Heights Anthem` has 3 tags. The normal `search_songs("Crown Heights")` service returned 1 result in my environment because SQLAlchemy collapsed duplicate ORM entities, but the raw joined query confirmed the duplicate-row condition that could produce repeated search results if the query shape changed or returned raw rows.
 
 ### How I found the root cause
 
-TODO: Describe which files/functions I traced and what led me to the specific root cause.
+I traced the search flow from `GET /songs/search?q=...` in `routes/songs.py` to `search_songs()` in `services/search_service.py`. The service queries `Song`, joins through the `song_tags` association table, filters by title or artist, and then returns the results. Because `song_tags` is a many-to-many table, a song with multiple tags can appear multiple times in the joined query result.
 
 ### The root cause
 
-TODO: Explain the precise bug in plain English.
+The search query joined `Song` to `song_tags` but did not explicitly deduplicate songs. A multi-tag song could produce multiple joined rows for the same song ID. In my local ORM result, SQLAlchemy collapsed those duplicate `Song` objects, but the query itself still produced duplicate rows. The service was relying on ORM behavior instead of explicitly asking the database for distinct songs.
 
 ### My fix and side-effect check
 
-TODO: Explain what I changed, why it fixed the issue, and what related behavior I checked afterward.
+I added `.distinct()` to the search query before `.all()` so the service explicitly returns each matching song only once. I verified the fix by running `python -m pytest tests/test_search.py -v`, which passed all search tests. I also ran the full suite with `python -m pytest tests/ -v`, and all 13 tests passed.
 
 ## Issue 5: The last song in a playlist never shows up
 
